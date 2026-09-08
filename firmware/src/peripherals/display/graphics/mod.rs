@@ -3,6 +3,8 @@ pub mod error;
 mod primitives;
 pub mod text;
 
+use core::future::Future;
+
 use embedded_graphics::{
     pixelcolor::Rgb565,
     prelude::{Dimensions, DrawTarget, IntoStorage, OriginDimensions, Pixel, Size},
@@ -41,14 +43,14 @@ impl DrawTarget for Display {
 }
 
 pub trait Graphic {
-    fn draw(&self, display: &mut Display) -> Result<(), GraphicsError>;
+    fn draw(&self, display: &mut Display) -> impl Future<Output = Result<(), GraphicsError>>;
 }
 
 impl Display {
-    pub fn draw<T>(&mut self, shape: &T) -> Result<(), GraphicsError>
+    pub async fn draw<T>(&mut self, shape: &T) -> Result<(), GraphicsError>
     where
         T: Graphic,
     {
-        shape.draw(self)
+        shape.draw(self).await
     }
 }

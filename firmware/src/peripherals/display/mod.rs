@@ -187,14 +187,19 @@ impl Display {
         Some(((self.buffer[index] as u16) << 8) | (self.buffer[index + 1] as u16))
     }
 
-    pub fn clear(&mut self, color: Color) {
+    pub async fn clear(&mut self, color: Color) {
         debug!("Setting background color: {:?}", color);
 
         let color_u16: u16 = color.into();
 
-        for i in 0..BUFFER_SIZE / 2 {
-            self.buffer[i * 2] = (color_u16 >> 8) as u8;
-            self.buffer[i * 2 + 1] = (color_u16 & 0xFF) as u8;
+        for rows in self
+            .buffer
+            .chunks_mut(BYTES_PER_ROW * RENDER_STRIPE_HEIGHT as usize)
+        {
+            for pixel in rows.as_chunks_mut::<2>().0 {
+                pixel.copy_from_slice(&color_u16.to_be_bytes());
+            }
+            yield_now().await;
         }
     }
 

@@ -1,6 +1,7 @@
 use alloc::{string::String, vec::Vec};
 use core::cmp::Ordering;
 
+use embassy_futures::yield_now;
 use log::debug;
 
 use super::{Color, Display, Graphic, GraphicsError};
@@ -118,7 +119,7 @@ impl<'a> BinaryFont<'a> {
         Err(GraphicsError::FontCharacterNotFound(ch))
     }
 
-    fn render_glyph(
+    async fn render_glyph(
         &self,
         glyph: &GlyphMetadata,
         x: i32,
@@ -163,6 +164,7 @@ impl<'a> BinaryFont<'a> {
                     display.set_pixel(pixel_x, pixel_y, pixel_color);
                 }
             }
+            yield_now().await;
         }
     }
 }
@@ -189,7 +191,7 @@ pub struct Text {
 }
 
 impl Graphic for Text {
-    fn draw(&self, display: &mut Display) -> Result<(), GraphicsError> {
+    async fn draw(&self, display: &mut Display) -> Result<(), GraphicsError> {
         debug!(
             "Drawing text '{}' at ({}, {}) with color {:?}",
             self.content, self.x, self.y, self.color
@@ -203,7 +205,7 @@ impl Graphic for Text {
         let mut max_top: i32 = 0;
         let mut min_bottom: i32 = 0;
 
-        for ch in self.content.chars() {
+        for (index, ch) in self.content.chars().enumerate() {
             let glyph = font.find_glyph(ch)?;
             text_width += glyph.advance_width as i32;
 
@@ -214,6 +216,9 @@ impl Graphic for Text {
             min_bottom = min_bottom.min(bottom);
 
             glyphs.push(glyph);
+            if (index + 1) % 16 == 0 {
+                yield_now().await;
+            }
         }
 
         let mut cursor_x = match self.horizontal_align {
@@ -229,7 +234,8 @@ impl Graphic for Text {
         };
 
         for glyph in glyphs.iter() {
-            font.render_glyph(glyph, cursor_x, cursor_y, color, display);
+            font.render_glyph(glyph, cursor_x, cursor_y, color, display)
+                .await;
             cursor_x += glyph.advance_width as i32;
         }
 

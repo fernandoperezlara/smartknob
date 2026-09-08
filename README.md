@@ -27,7 +27,12 @@ is not reconstructed.
 
 Periods include the work done by each loop. If an iteration overruns its period,
 the loop waits one period before trying again instead of issuing catch-up work.
-These are scheduling targets, not real-time guarantees: synchronous drawing
+Drawing yields cooperatively while clearing the framebuffer (every 8 rows),
+rasterizing text (every glyph row), laying out text (every 16 characters), and
+drawing circles (every 128 pixels). This lets encoder sampling run during frame
+preparation as well as transmission. Dynamic views allocate one boxed render
+future per view and refresh; yielding within drawing adds no heap allocations.
+These are scheduling targets, not real-time guarantees: each drawing chunk
 still occupies the executor, and an in-flight SPI stripe still delays encoder
 reads. Motor control is not implemented yet.
 

@@ -2,7 +2,7 @@ mod views;
 
 use alloc::{boxed::Box, vec::Vec};
 
-pub use views::{LightView, View};
+pub use views::{LightView, RenderFuture, View};
 
 use crate::{
     app::AppState,
@@ -29,14 +29,14 @@ impl ViewManager {
         }
     }
 
-    pub fn select(
+    pub async fn select(
         &self,
         index: usize,
         state: &AppState,
         display: &mut Display,
     ) -> Result<(), GraphicsError> {
         if let Some(view) = self.views.get(index) {
-            view.render(state, display)?;
+            view.render(state, display).await?;
         }
 
         Ok(())

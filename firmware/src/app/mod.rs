@@ -69,8 +69,8 @@ impl App {
             },
         }
 
-        self.display.clear(Color::BLACK);
-        self.view.select(0, &self.state, &mut self.display)?;
+        self.display.clear(Color::BLACK).await;
+        self.view.select(0, &self.state, &mut self.display).await?;
         self.display.render().await?;
 
         let latest_state = LatestState::new();
@@ -99,8 +99,8 @@ impl App {
         loop {
             let started = Instant::now();
             let state = latest_state.wait().await;
-            display.clear(Color::BLACK);
-            view.select(0, &state, display)?;
+            display.clear(Color::BLACK).await;
+            view.select(0, &state, display).await?;
 
             display.render().await?;
 
