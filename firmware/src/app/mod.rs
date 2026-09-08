@@ -1,8 +1,11 @@
+mod encoder_sampling;
 mod state;
 
 use alloc::boxed::Box;
 
-use embassy_time::{Duration, Timer};
+use embassy_futures::select::{Either, select};
+use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
+use embassy_time::{Duration, Instant, Timer};
 use libm::{cosf, sinf};
 use log::{debug, error, info};
 
@@ -15,10 +18,14 @@ use crate::{
             Display,
             graphics::{Color, FilledCircle},
         },
-        encoder::{ANGLE_TO_RADIANS, Encoder},
+        encoder::{ANGLE_TO_RADIANS, Encoder, Position},
     },
     ui::{LightView, View, ViewManager},
 };
+
+const DISPLAY_PERIOD: Duration = Duration::from_millis(33);
+
+type LatestPosition = Signal<CriticalSectionRawMutex, Position>;
 
 pub struct App {
     display: Display,
@@ -70,30 +77,60 @@ impl App {
         self.view.select(0, &self.state, &mut self.display)?;
         self.display.render().await?;
 
-        info!("Starting main loop");
+        let latest_position = LatestPosition::new();
+        info!("Starting encoder sampling (1 ms) and display refresh (33 ms)");
+
+        match select(
+            encoder_sampling::run(&mut self.encoder, &latest_position),
+            Self::refresh(
+                &mut self.display,
+                &self.view,
+                &mut self.state,
+                &latest_position,
+            ),
+        )
+        .await
+        {
+            Either::First(result) | Either::Second(result) => result,
+        }
+    }
+
+    async fn refresh(
+        display: &mut Display,
+        view: &ViewManager,
+        state: &mut AppState,
+        latest_position: &LatestPosition,
+    ) -> Result<(), SmartknobError> {
         loop {
-            let position = self.encoder.read().await?;
+            let started = Instant::now();
+            let position = latest_position.wait().await;
             let angle = position.value as f32 * -ANGLE_TO_RADIANS;
 
-            self.state.position = ((position.value as u32 * 100) / 16383) as f32;
+            state.position = ((position.value as u32 * 100) / 16383) as f32;
 
             let x = 120.0 + 105.0 * cosf(angle);
             let y = 120.0 + 105.0 * sinf(angle);
 
-            self.display.clear(Color::BLACK);
+            display.clear(Color::BLACK);
 
-            self.view.select(0, &self.state, &mut self.display)?;
+            view.select(0, state, display)?;
 
-            self.display.draw(&FilledCircle {
+            display.draw(&FilledCircle {
                 x: x as u16,
                 y: y as u16,
                 diameter: 12,
                 color: Color::WHITE,
             })?;
 
-            self.display.render().await?;
+            display.render().await?;
 
-            Timer::after(Duration::from_millis(16)).await;
+            let deadline = started + DISPLAY_PERIOD;
+            Timer::at(if deadline > Instant::now() {
+                deadline
+            } else {
+                Instant::now() + DISPLAY_PERIOD
+            })
+            .await;
         }
     }
 }
