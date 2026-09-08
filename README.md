@@ -29,6 +29,17 @@ Check all screen rows for missing or shifted pixels and measure the maximum
 encoder interval while rotating continuously. The 1 ms sampling period is a
 target to validate on the board, not a guaranteed upper bound.
 
+The MT6701 uses SPI mode 1 at 1 MHz. Each read clocks the complete 24-bit SSI
+frame: 14 angle bits, 4 status bits and 6 CRC bits. The decoder checks the CRC
+before interpreting status, and rejects loss of tracking, strong/weak magnetic
+fields and the reserved field status. Push detection is valid and retained in
+`Position.status` bit 2. Invalid frames propagate as errors and end the current
+application run; they are not published or retried automatically.
+
+The protocol follows the manufacturer's [MT6701 datasheet, SSI Read Angle](https://www.magntek.com.cn/upload/pdf/202407/MT6701_Rev.1.8.pdf).
+Hardware validation should check 24 clock pulses per read, falling-edge data
+capture, and matching CRCs on captured frames.
+
 Rust `no_std` firmware for the ESP32-C6, with an SPI display and encoder.
 
 ## Development
