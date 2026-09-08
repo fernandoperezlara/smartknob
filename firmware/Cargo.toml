@@ -2,35 +2,36 @@
 name = "smartknob"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.98.1"
 build = "build/main.rs"
 
 [dependencies]
 # Core async runtime
-embassy-executor = "0.9.1"
-embassy-time = "0.4.0"
-embassy-sync = "0.7.2"
+embassy-executor = "0.10.0"
+embassy-time = "0.5.1"
+embassy-sync = "0.8.0"
 static_cell = "2.1.1"
 
 # Standard embedded traits
 embedded-hal-async = "1.0.0"
 
 # Utilities
-log = "0.4.27"
-libm = "0.2.15"
-embedded-graphics = "0.8.1"
+log = "0.4.34"
+libm = "0.2.16"
+embedded-graphics = "0.8.2"
 
 # ESP32-specific crates
-esp-hal = { git = "https://github.com/esp-rs/esp-hal", branch = "main", features = ["esp32c6", "unstable"] }
-esp-rtos = { git = "https://github.com/esp-rs/esp-hal", branch = "main", features = ["esp32c6", "embassy", "log-04"] }
-esp-backtrace = { git = "https://github.com/esp-rs/esp-hal", branch = "main", features = ["panic-handler", "println", "esp32c6"] }
-esp-bootloader-esp-idf = { git = "https://github.com/esp-rs/esp-hal", branch = "main", features = ["esp32c6"] }
-esp-println = { git = "https://github.com/esp-rs/esp-hal", branch = "main", features = ["log-04", "esp32c6"] }
-esp-alloc = { git = "https://github.com/esp-rs/esp-alloc", branch = "main" }
+esp-hal = { version = "~1.2.0", features = ["esp32c6", "unstable"] }
+esp-rtos = { version = "0.4.0", features = ["esp32c6", "embassy", "log-04"] }
+esp-backtrace = { version = "0.20.0", features = ["panic-handler", "println", "esp32c6"] }
+esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32c6"] }
+esp-println = { version = "0.18.0", features = ["log-04", "esp32c6"] }
+esp-alloc = { version = "0.11.0", features = ["esp32c6"] }
 
 [build-dependencies]
-fontdue = "0.9.3"
-serde = "1.0.228"
-toml = "0.9.7"
+fontdue = "0.9.4"
+serde = "1.0.229"
+toml = "1.1.5"
 
 [profile.release]
 opt-level = "s"

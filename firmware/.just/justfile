@@ -3,7 +3,7 @@ mod fmt
 
 # Build for ESP32 in release mode
 build:
-  @cargo +nightly build --release
+  @cargo build --release --locked
 
 # Clean all build artifacts
 clean:
@@ -11,7 +11,7 @@ clean:
 
 # Run clippy check with strict warnings
 check:
-  @cargo +nightly clippy --release -- -D warnings
+  @cargo clippy --release --locked -- -D warnings
 
 # Build and flash to device
 run log="info":

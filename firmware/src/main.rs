@@ -11,7 +11,7 @@ esp_bootloader_esp_idf::esp_app_desc!();
 
 #[esp_rtos::main]
 async fn main(_spawner: Spawner) {
-    esp_alloc::heap_allocator!(256 * 1024);
+    esp_alloc::heap_allocator!(size: 256 * 1024);
 
     esp_println::logger::init_logger_from_env();
 

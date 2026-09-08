@@ -1,13 +1,11 @@
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, mutex::Mutex};
 use embedded_hal_async::spi::SpiBus;
 use esp_hal::{
-    Async,
-    dma::{AnyGdmaChannel, DmaChannelConvert, DmaChannelFor, DmaRxBuf, DmaTxBuf},
-    dma_buffers,
+    Async, dma_rx_buffer, dma_tx_buffer,
     gpio::{InputPin, Level, Output, OutputConfig, OutputPin},
     spi::{
         Mode,
-        master::{Config, Instance, Spi, SpiDmaBus},
+        master::{Config, Instance, Spi, SpiDma},
     },
     time::Rate,
 };
@@ -18,24 +16,23 @@ use super::error::SpiError;
 
 const DMA_BUFFER_SIZE: usize = 4096;
 
-static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, SpiDmaBus<'static, Async>>> =
+static SPI_BUS: StaticCell<Mutex<CriticalSectionRawMutex, SpiDma<'static, Async>>> =
     StaticCell::new();
 
 pub struct SharedSpiBus {
-    inner: &'static Mutex<CriticalSectionRawMutex, SpiDmaBus<'static, Async>>,
+    inner: &'static Mutex<CriticalSectionRawMutex, SpiDma<'static, Async>>,
 }
 
 impl SharedSpiBus {
-    pub fn new<SPI, DMA, SCLK, MOSI, MISO>(
+    pub fn new<SPI, SCLK, MOSI, MISO>(
         spi_instance: SPI,
-        dma_channel: DMA,
+        dma_channel: esp_hal::peripherals::DMA_CH0<'static>,
         sclk: SCLK,
         mosi: MOSI,
         miso: MISO,
     ) -> Result<Self, SpiError>
     where
         SPI: Instance + 'static,
-        DMA: DmaChannelConvert<AnyGdmaChannel<'static>> + DmaChannelFor<SPI> + 'static,
         SCLK: OutputPin + 'static,
         MOSI: OutputPin + 'static,
         MISO: InputPin + 'static,
@@ -44,9 +41,8 @@ impl SharedSpiBus {
 
         let spi_config = Config::default();
 
-        let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(DMA_BUFFER_SIZE);
-        let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer)?;
-        let dma_tx_buf = DmaTxBuf::new(tx_descriptors, tx_buffer)?;
+        let dma_rx_buf = dma_rx_buffer!(DMA_BUFFER_SIZE)?;
+        let dma_tx_buf = dma_tx_buffer!(DMA_BUFFER_SIZE)?;
 
         let spi = Spi::new(spi_instance, spi_config)
             .map_err(SpiError::from)?
@@ -64,13 +60,13 @@ impl SharedSpiBus {
         Ok(Self { inner })
     }
 
-    pub fn bus(&self) -> &'static Mutex<CriticalSectionRawMutex, SpiDmaBus<'static, Async>> {
+    pub fn bus(&self) -> &'static Mutex<CriticalSectionRawMutex, SpiDma<'static, Async>> {
         self.inner
     }
 }
 
 pub struct SpiDevice {
-    bus: &'static Mutex<CriticalSectionRawMutex, SpiDmaBus<'static, Async>>,
+    bus: &'static Mutex<CriticalSectionRawMutex, SpiDma<'static, Async>>,
     cs: Output<'static>,
     frequency: u32,
     mode: Mode,

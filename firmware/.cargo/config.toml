@@ -2,18 +2,11 @@
 target = "riscv32imac-unknown-none-elf"
 
 [target.riscv32imac-unknown-none-elf]
-linker = "ldproxy"
 rustflags = [
-  "--cfg",  "espidf_time64",
-  "-C", "link-arg=--ldproxy-linker",
-  "-C", "link-arg=rust-lld",
   "-C", "force-frame-pointers",
   "-C", "link-arg=-Tlinkall.x",
 ]
-runner = "espflash flash --monitor"
+runner = "espflash flash --monitor --chip esp32c6"
 
 [env]
 ESP_LOG = "info"
-
-[unstable]
-build-std = [ "alloc", "core" ]
