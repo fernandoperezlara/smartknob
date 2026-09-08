@@ -223,9 +223,9 @@ impl Graphic for Text {
         };
 
         let cursor_y = match self.vertical_align {
-            VerticalAlignment::Top => self.y as i32 - min_bottom,
+            VerticalAlignment::Top => self.y as i32 + max_top,
             VerticalAlignment::Middle => self.y as i32 + ((max_top - min_bottom) / 2) + min_bottom,
-            VerticalAlignment::Bottom => self.y as i32 + max_top,
+            VerticalAlignment::Bottom => self.y as i32 + min_bottom,
         };
 
         for glyph in glyphs.iter() {
