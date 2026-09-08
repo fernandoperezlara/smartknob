@@ -5,8 +5,8 @@
 After display initialization, the application runs two concurrent async loops
 within its main Embassy task. Encoder sampling targets a 1 ms period; display
 refresh targets a 33 ms period. A single-slot Embassy signal retains the latest
-position, replacing older unread samples. An error in either loop ends the
-application run and propagates to the existing error handler.
+position, replacing older unread samples. Encoder read errors are discarded
+and retried; display errors still propagate to the application error handler.
 
 Periods include the work done by each loop. If an iteration overruns its period,
 the loop waits one period before trying again instead of issuing catch-up work.
@@ -33,8 +33,14 @@ The MT6701 uses SPI mode 1 at 1 MHz. Each read clocks the complete 24-bit SSI
 frame: 14 angle bits, 4 status bits and 6 CRC bits. The decoder checks the CRC
 before interpreting status, and rejects loss of tracking, strong/weak magnetic
 fields and the reserved field status. Push detection is valid and retained in
-`Position.status` bit 2. Invalid frames propagate as errors and end the current
-application run; they are not published or retried automatically.
+`Position.status` bit 2. The sampling loop discards invalid frames and SPI read
+errors, preserving the last valid position and logging at most one warning per
+second. After a failure lasting at least 500 ms, recovery is logged when valid
+readings resume. The screen retains the last valid number and indicator; errors are
+reported only in the logs. Before the first valid reading, the number is zero.
+The next valid reading updates the display and logs recovery. Invalid positions
+are never published as valid samples. The indicator's zero is at the top of the
+screen, at framebuffer coordinates (120, 15).
 
 The protocol follows the manufacturer's [MT6701 datasheet, SSI Read Angle](https://www.magntek.com.cn/upload/pdf/202407/MT6701_Rev.1.8.pdf).
 Hardware validation should check 24 clock pulses per read, falling-edge data

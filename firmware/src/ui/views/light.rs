@@ -22,7 +22,7 @@ impl View for LightView {
 
     fn render(&self, state: &AppState, display: &mut Display) -> Result<(), GraphicsError> {
         let text = Text {
-            content: format!("Angle: {:.1}", state.position),
+            content: format!("{:.1}", state.position),
             x: 120,
             y: 120,
             color: Color::WHITE,

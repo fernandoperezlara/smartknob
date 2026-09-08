@@ -108,8 +108,8 @@ impl App {
 
             state.position = ((position.value as u32 * 100) / 16383) as f32;
 
-            let x = 120.0 + 105.0 * cosf(angle);
-            let y = 120.0 + 105.0 * sinf(angle);
+            let x = 120.0 + 105.0 * sinf(angle);
+            let y = 120.0 - 105.0 * cosf(angle);
 
             display.clear(Color::BLACK);
 
