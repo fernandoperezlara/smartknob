@@ -134,6 +134,14 @@ impl<'a> BinaryFont<'a> {
                 let pixel_x = x_offset + (px as i32);
                 let pixel_y = y_offset + (py as i32);
 
+                let (Ok(pixel_x), Ok(pixel_y)) = (u16::try_from(pixel_x), u16::try_from(pixel_y))
+                else {
+                    continue;
+                };
+                let Some(background) = display.get_pixel(pixel_x, pixel_y) else {
+                    continue;
+                };
+
                 let pixel_index = (py as usize) * (glyph.width as usize) + (px as usize);
                 let byte_index = glyph.bitmap_offset as usize + (pixel_index / 2);
                 let is_high_nibble = (pixel_index & 1) == 0;
@@ -149,12 +157,10 @@ impl<'a> BinaryFont<'a> {
                     let pixel_color = if alpha >= 15 {
                         color
                     } else {
-                        let bg_color = display.get_pixel(pixel_x as u16, pixel_y as u16);
-
-                        blend_rgb565(color, bg_color, alpha)
+                        blend_rgb565(color, background, alpha)
                     };
 
-                    display.set_pixel(pixel_x as u16, pixel_y as u16, pixel_color);
+                    display.set_pixel(pixel_x, pixel_y, pixel_color);
                 }
             }
         }

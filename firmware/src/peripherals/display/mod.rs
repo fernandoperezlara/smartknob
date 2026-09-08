@@ -167,16 +167,24 @@ impl Display {
     }
 
     pub fn set_pixel(&mut self, x: u16, y: u16, color: u16) {
+        if x >= DISPLAY_WIDTH || y >= DISPLAY_HEIGHT {
+            return;
+        }
+
         let index = ((y as usize) * (DISPLAY_WIDTH as usize) + (x as usize)) * 2;
 
         self.buffer[index] = (color >> 8) as u8;
         self.buffer[index + 1] = (color & 0xFF) as u8;
     }
 
-    pub fn get_pixel(&self, x: u16, y: u16) -> u16 {
+    pub fn get_pixel(&self, x: u16, y: u16) -> Option<u16> {
+        if x >= DISPLAY_WIDTH || y >= DISPLAY_HEIGHT {
+            return None;
+        }
+
         let index = ((y as usize) * (DISPLAY_WIDTH as usize) + (x as usize)) * 2;
 
-        ((self.buffer[index] as u16) << 8) | (self.buffer[index + 1] as u16)
+        Some(((self.buffer[index] as u16) << 8) | (self.buffer[index + 1] as u16))
     }
 
     pub fn clear(&mut self, color: Color) {
