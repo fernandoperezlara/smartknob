@@ -5,6 +5,7 @@ pub mod graphics;
 
 use alloc::boxed::Box;
 
+use embassy_futures::yield_now;
 use embassy_time::{Duration, Timer};
 use esp_hal::gpio::Output;
 use log::{debug, info};
@@ -15,6 +16,8 @@ use crate::hardware::spi::SpiDevice;
 const DISPLAY_WIDTH: u16 = 240;
 const DISPLAY_HEIGHT: u16 = 240;
 const BUFFER_SIZE: usize = (DISPLAY_WIDTH as usize) * (DISPLAY_HEIGHT as usize) * 2;
+const RENDER_STRIPE_HEIGHT: u16 = 8;
+const BYTES_PER_ROW: usize = DISPLAY_WIDTH as usize * 2;
 
 enum Operation {
     Command(u8),
@@ -190,11 +193,18 @@ impl Display {
     pub async fn render(&mut self) -> Result<(), DisplayError> {
         debug!("Rendering buffer to display");
 
-        self.set_frame(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1)
-            .await?;
+        for y_start in (0..DISPLAY_HEIGHT).step_by(RENDER_STRIPE_HEIGHT as usize) {
+            let y_end = (y_start + RENDER_STRIPE_HEIGHT).min(DISPLAY_HEIGHT);
+            self.set_frame(0, y_start, DISPLAY_WIDTH - 1, y_end - 1)
+                .await?;
 
-        self.dc.set_high();
-        self.spi.write(self.buffer.as_slice()).await?;
+            let start = y_start as usize * BYTES_PER_ROW;
+            let end = y_end as usize * BYTES_PER_ROW;
+            self.dc.set_high();
+            self.spi.write(&self.buffer[start..end]).await?;
+
+            yield_now().await;
+        }
 
         Ok(())
     }
