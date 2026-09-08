@@ -72,6 +72,23 @@ pub struct SpiDevice {
     mode: Mode,
 }
 
+struct ChipSelectGuard<'a> {
+    cs: &'a mut Output<'static>,
+}
+
+impl<'a> ChipSelectGuard<'a> {
+    fn new(cs: &'a mut Output<'static>) -> Self {
+        cs.set_low();
+        Self { cs }
+    }
+}
+
+impl Drop for ChipSelectGuard<'_> {
+    fn drop(&mut self) {
+        self.cs.set_high();
+    }
+}
+
 impl SpiDevice {
     pub fn new<CS>(bus: &SharedSpiBus, cs_pin: CS, frequency: u32, mode: Mode) -> Self
     where
@@ -101,9 +118,9 @@ impl SpiDevice {
             .with_mode(self.mode);
         bus.apply_config(&config)?;
 
-        self.cs.set_low();
+        let chip_select = ChipSelectGuard::new(&mut self.cs);
         let result = SpiBus::write(&mut *bus, data).await;
-        self.cs.set_high();
+        drop(chip_select);
 
         result.map_err(|_| SpiError::write_failed("Failed to write data to SPI bus"))
     }
@@ -122,9 +139,9 @@ impl SpiDevice {
             .with_mode(self.mode);
         bus.apply_config(&config)?;
 
-        self.cs.set_low();
+        let chip_select = ChipSelectGuard::new(&mut self.cs);
         let result = SpiBus::read(&mut *bus, data).await;
-        self.cs.set_high();
+        drop(chip_select);
 
         result.map_err(|_| SpiError::read_failed("Failed to read data from SPI bus"))
     }
@@ -149,9 +166,9 @@ impl SpiDevice {
             .with_mode(self.mode);
         bus.apply_config(&config)?;
 
-        self.cs.set_low();
+        let chip_select = ChipSelectGuard::new(&mut self.cs);
         let result = SpiBus::transfer(&mut *bus, read, write).await;
-        self.cs.set_high();
+        drop(chip_select);
 
         result.map_err(|_| SpiError::transfer_failed("Failed to transfer data on SPI bus"))
     }
@@ -168,9 +185,9 @@ impl SpiDevice {
             .with_mode(self.mode);
         bus.apply_config(&config)?;
 
-        self.cs.set_low();
+        let chip_select = ChipSelectGuard::new(&mut self.cs);
         let result = SpiBus::transfer_in_place(&mut *bus, data).await;
-        self.cs.set_high();
+        drop(chip_select);
 
         result.map_err(|_| SpiError::transfer_failed("Failed to transfer data in place on SPI bus"))
     }
