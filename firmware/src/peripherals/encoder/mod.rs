@@ -5,12 +5,16 @@ use crate::hardware::spi::SpiDevice;
 pub mod error;
 mod frame;
 
-pub use frame::Position;
-
 const RESOLUTION_BITS: u8 = 14;
 const MAX_VALUE: u16 = (1 << RESOLUTION_BITS) - 1;
 pub const ANGLE_TO_DEGREES: f32 = 360.0 / MAX_VALUE as f32;
 pub const ANGLE_TO_RADIANS: f32 = (2.0 * PI) / MAX_VALUE as f32;
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Position {
+    pub value: u16,
+    pub status: u8,
+}
 
 pub struct Encoder {
     spi: SpiDevice,

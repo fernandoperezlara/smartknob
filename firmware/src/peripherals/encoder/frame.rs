@@ -1,10 +1,4 @@
-use super::error::FrameError;
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct Position {
-    pub value: u16,
-    pub status: u8,
-}
+use super::{Position, error::FrameError};
 
 pub(super) fn decode(bytes: [u8; 3]) -> Result<Position, FrameError> {
     let frame = u32::from_be_bytes([0, bytes[0], bytes[1], bytes[2]]);
