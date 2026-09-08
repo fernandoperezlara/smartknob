@@ -15,4 +15,4 @@ check:
 
 # Build and flash to device
 run log="info":
-  @ESP_LOG={{log}} cargo run --release
+  @ESP_LOG={{log}} cargo run --release --locked

@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - firmware/**
+      - .github/workflows/**
+  pull_request:
+    branches: [main]
+    paths:
+      - firmware/**
+      - .github/workflows/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+    working-directory: firmware
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  JUST_VERSION: "1.58.0"
+  JUST_SHA256: "4a5cc2f53e6f0f8c59092a6cc38291eb729d46a7dd95d3ae582008881b84931d"
+
+jobs:
+  format:
+    name: Code Formatting
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Install just
+        run: |
+          mkdir -p "$RUNNER_TEMP/just"
+          curl --fail --location --retry 3 "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz" --output "$RUNNER_TEMP/just.tar.gz"
+          echo "$JUST_SHA256  $RUNNER_TEMP/just.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/just.tar.gz" -C "$RUNNER_TEMP/just" just
+          echo "$RUNNER_TEMP/just" >> "$GITHUB_PATH"
+
+      - name: Install formatter
+        run: rustup toolchain install nightly --profile minimal --component rustfmt
+
+      - name: Check formatting
+        run: just fmt check
+
+  firmware:
+    name: Firmware Check and Build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Install just
+        run: |
+          mkdir -p "$RUNNER_TEMP/just"
+          curl --fail --location --retry 3 "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz" --output "$RUNNER_TEMP/just.tar.gz"
+          echo "$JUST_SHA256  $RUNNER_TEMP/just.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/just.tar.gz" -C "$RUNNER_TEMP/just" just
+          echo "$RUNNER_TEMP/just" >> "$GITHUB_PATH"
+
+      - name: Install project toolchain
+        run: |
+          rustup show
+          rustc --version --verbose
+
+      - name: Identify compiler for cache
+        id: compiler
+        run: |
+          compiler_hash=$(rustc --version --verbose | sha256sum | cut -d ' ' -f 1)
+          echo "hash=$compiler_hash" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Cargo dependencies and build outputs
+        uses: actions/cache@v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            firmware/target
+          key: cargo-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.hash }}-${{ hashFiles('firmware/rust-toolchain.toml', 'firmware/.cargo/config.toml') }}-${{ hashFiles('firmware/Cargo.lock', 'firmware/Cargo.toml') }}
+          restore-keys: |
+            cargo-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.hash }}-${{ hashFiles('firmware/rust-toolchain.toml', 'firmware/.cargo/config.toml') }}-
+
+      - name: Check with Clippy
+        run: just check
+
+      - name: Build release firmware
+        run: just build
+
+      - name: Upload firmware ELF
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: smartknob-esp32c6-${{ github.sha }}
+          path: firmware/target/riscv32imac-unknown-none-elf/release/smartknob
+          if-no-files-found: error
+          retention-days: 14

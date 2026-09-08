@@ -59,10 +59,3 @@ All firmware dependencies come from crates.io releases. Commit `Cargo.lock`
 with dependency updates and use `--locked` for validation. The HAL's `unstable`
 feature is still needed for DMA APIs; its minor version is constrained to 1.2
 so changing that API requires an explicit manifest update.
-
-The Docker Compose build uses the same firmware toolchain:
-
-```sh
-docker compose build build
-docker compose run --rm build
-```
