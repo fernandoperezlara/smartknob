@@ -6,7 +6,6 @@ use alloc::boxed::Box;
 use embassy_futures::select::{Either, select};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, signal::Signal};
 use embassy_time::{Duration, Instant, Timer};
-use libm::{cosf, sinf};
 use log::{debug, error, info};
 
 pub use self::state::AppState;
@@ -14,18 +13,15 @@ use crate::{
     error::SmartknobError,
     hardware::Hardware,
     peripherals::{
-        display::{
-            Display,
-            graphics::{Color, FilledCircle},
-        },
-        encoder::{ANGLE_TO_RADIANS, Encoder, Position},
+        display::{Display, graphics::Color},
+        encoder::Encoder,
     },
     ui::{LightView, View, ViewManager},
 };
 
 const DISPLAY_PERIOD: Duration = Duration::from_millis(33);
 
-type LatestPosition = Signal<CriticalSectionRawMutex, Position>;
+type LatestState = Signal<CriticalSectionRawMutex, AppState>;
 
 pub struct App {
     display: Display,
@@ -77,17 +73,17 @@ impl App {
         self.view.select(0, &self.state, &mut self.display)?;
         self.display.render().await?;
 
-        let latest_position = LatestPosition::new();
+        let latest_state = LatestState::new();
         info!("Starting encoder sampling (1 ms) and display refresh (33 ms)");
 
+        let view = &self.view;
+        let state = &mut self.state;
         match select(
-            encoder_sampling::run(&mut self.encoder, &latest_position),
-            Self::refresh(
-                &mut self.display,
-                &self.view,
-                &mut self.state,
-                &latest_position,
-            ),
+            encoder_sampling::run(&mut self.encoder, |_position, delta_counts| {
+                view.on_rotate(0, delta_counts, state);
+                latest_state.signal(*state);
+            }),
+            Self::refresh(&mut self.display, view, &latest_state),
         )
         .await
         {
@@ -98,29 +94,13 @@ impl App {
     async fn refresh(
         display: &mut Display,
         view: &ViewManager,
-        state: &mut AppState,
-        latest_position: &LatestPosition,
+        latest_state: &LatestState,
     ) -> Result<(), SmartknobError> {
         loop {
             let started = Instant::now();
-            let position = latest_position.wait().await;
-            let angle = position.value as f32 * -ANGLE_TO_RADIANS;
-
-            state.position = ((position.value as u32 * 100) / 16383) as f32;
-
-            let x = 120.0 + 105.0 * sinf(angle);
-            let y = 120.0 - 105.0 * cosf(angle);
-
+            let state = latest_state.wait().await;
             display.clear(Color::BLACK);
-
-            view.select(0, state, display)?;
-
-            display.draw(&FilledCircle {
-                x: x as u16,
-                y: y as u16,
-                diameter: 12,
-                color: Color::WHITE,
-            })?;
+            view.select(0, &state, display)?;
 
             display.render().await?;
 

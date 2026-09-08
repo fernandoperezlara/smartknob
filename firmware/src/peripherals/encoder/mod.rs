@@ -6,14 +6,22 @@ pub mod error;
 mod frame;
 
 const RESOLUTION_BITS: u8 = 14;
-const MAX_VALUE: u16 = (1 << RESOLUTION_BITS) - 1;
-pub const ANGLE_TO_DEGREES: f32 = 360.0 / MAX_VALUE as f32;
-pub const ANGLE_TO_RADIANS: f32 = (2.0 * PI) / MAX_VALUE as f32;
+pub const COUNTS_PER_REVOLUTION: u16 = 1 << RESOLUTION_BITS;
+pub const ANGLE_TO_DEGREES: f32 = 360.0 / COUNTS_PER_REVOLUTION as f32;
+pub const ANGLE_TO_RADIANS: f32 = (2.0 * PI) / COUNTS_PER_REVOLUTION as f32;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Position {
     pub value: u16,
     pub status: u8,
+}
+
+impl Position {
+    pub fn delta_from(&self, previous: &Self) -> i32 {
+        let counts = i32::from(COUNTS_PER_REVOLUTION);
+        let half = counts / 2;
+        (i32::from(self.value) - i32::from(previous.value) + half).rem_euclid(counts) - half
+    }
 }
 
 pub struct Encoder {

@@ -23,6 +23,12 @@ impl ViewManager {
         self.views.push(view);
     }
 
+    pub fn on_rotate(&self, index: usize, delta_counts: i32, state: &mut AppState) {
+        if let Some(view) = self.views.get(index) {
+            view.on_rotate(delta_counts, state);
+        }
+    }
+
     pub fn select(
         &self,
         index: usize,

@@ -1,6 +1,6 @@
-#[derive(Default)]
+#[derive(Clone, Copy, Default)]
 pub struct AppState {
-    pub position: f32,
+    pub rotation_counts: i64,
 }
 
 impl AppState {

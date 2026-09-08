@@ -1,8 +1,10 @@
 use embassy_time::{Duration, Instant, Timer};
 use log::{info, warn};
 
-use super::LatestPosition;
-use crate::{error::SmartknobError, peripherals::encoder::Encoder};
+use crate::{
+    error::SmartknobError,
+    peripherals::encoder::{Encoder, Position},
+};
 
 const ENCODER_PERIOD: Duration = Duration::from_millis(1);
 const WARNING_INTERVAL: Duration = Duration::from_secs(1);
@@ -10,8 +12,9 @@ const UNAVAILABLE_AFTER: Duration = Duration::from_millis(500);
 
 pub(super) async fn run(
     encoder: &mut Encoder,
-    latest_position: &LatestPosition,
+    mut on_sample: impl FnMut(&Position, i32),
 ) -> Result<(), SmartknobError> {
+    let mut previous: Option<Position> = None;
     let mut failure_since = None;
     let mut last_warning = None;
     let mut unavailable = false;
@@ -25,9 +28,14 @@ pub(super) async fn run(
                     info!("Encoder readings recovered");
                     unavailable = false;
                 }
-                latest_position.signal(position);
+                let delta = previous
+                    .as_ref()
+                    .map_or(0, |last| position.delta_from(last));
+                on_sample(&position, delta);
+                previous = Some(position);
             },
             Err(err) => {
+                previous = None;
                 let now = Instant::now();
                 let first_failure = *failure_since.get_or_insert(now);
                 if last_warning.is_none_or(|last| now - last >= WARNING_INTERVAL) {
