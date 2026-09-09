@@ -206,15 +206,15 @@ impl Display {
     pub async fn render(&mut self) -> Result<(), DisplayError> {
         debug!("Rendering buffer to display");
 
-        for y_start in (0..DISPLAY_HEIGHT).step_by(RENDER_STRIPE_HEIGHT as usize) {
-            let y_end = (y_start + RENDER_STRIPE_HEIGHT).min(DISPLAY_HEIGHT);
-            self.set_frame(0, y_start, DISPLAY_WIDTH - 1, y_end - 1)
-                .await?;
+        self.set_frame(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1)
+            .await?;
+        self.dc.set_high();
 
-            let start = y_start as usize * BYTES_PER_ROW;
-            let end = y_end as usize * BYTES_PER_ROW;
-            self.dc.set_high();
-            self.spi.write(&self.buffer[start..end]).await?;
+        for stripe in self
+            .buffer
+            .chunks(BYTES_PER_ROW * RENDER_STRIPE_HEIGHT as usize)
+        {
+            self.spi.write(stripe).await?;
 
             yield_now().await;
         }

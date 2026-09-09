@@ -1,6 +1,6 @@
 use super::{Position, error::FrameError};
 
-pub(super) fn decode(bytes: [u8; 3]) -> Result<Position, FrameError> {
+pub fn decode(bytes: [u8; 3]) -> Result<Position, FrameError> {
     let frame = u32::from_be_bytes([0, bytes[0], bytes[1], bytes[2]]);
     let payload = frame >> 6;
     let received = (frame & 0x3F) as u8;

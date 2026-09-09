@@ -1,19 +1,15 @@
+use core::convert::Infallible;
+
 use embassy_time::{Duration, Instant, Timer};
 use log::{info, warn};
 
-use crate::{
-    error::SmartknobError,
-    peripherals::encoder::{Encoder, Position},
-};
+use crate::peripherals::encoder::{Encoder, Position};
 
 const ENCODER_PERIOD: Duration = Duration::from_millis(1);
 const WARNING_INTERVAL: Duration = Duration::from_secs(1);
 const UNAVAILABLE_AFTER: Duration = Duration::from_millis(500);
 
-pub(super) async fn run(
-    encoder: &mut Encoder,
-    mut on_sample: impl FnMut(&Position, i32),
-) -> Result<(), SmartknobError> {
+pub async fn run(encoder: &mut Encoder, mut on_sample: impl FnMut(&Position, i32)) -> Infallible {
     let mut previous: Option<Position> = None;
     let mut failure_since = None;
     let mut last_warning = None;

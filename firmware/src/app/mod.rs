@@ -87,7 +87,8 @@ impl App {
         )
         .await
         {
-            Either::First(result) | Either::Second(result) => result,
+            Either::First(never) => match never {},
+            Either::Second(result) => result,
         }
     }
 
