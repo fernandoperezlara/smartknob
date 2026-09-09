@@ -9,9 +9,6 @@ on:
       - .github/workflows/**
   pull_request:
     branches: [main]
-    paths:
-      - firmware/**
-      - .github/workflows/**
 
 permissions:
   contents: read
@@ -103,3 +100,19 @@ jobs:
           path: firmware/target/riscv32imac-unknown-none-elf/release/smartknob
           if-no-files-found: error
           retention-days: 14
+
+  gate:
+    name: CI Gate
+    needs: [format, firmware]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Verify all jobs succeeded
+        if: ${{ contains(needs.*.result, 'failure')
+          || contains(needs.*.result, 'cancelled')
+          || contains(needs.*.result, 'skipped') }}
+        run: exit 1
