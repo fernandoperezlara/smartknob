@@ -672,9 +672,9 @@ dependencies = [
 
 [[package]]
 name = "esp-hal"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a2d6e99b6ccfad5c8067025c7b4d13eb8b5f21e288f7a3e204c114e8ab5dcf8"
+checksum = "e8fcf7e9ba5548fe1adf1e999d0b92685e5b83bfe2eaf024ed6e3c3ca97bd35c"
 dependencies = [
  "bitfield",
  "bytemuck",
