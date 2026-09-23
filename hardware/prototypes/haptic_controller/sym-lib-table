@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+
+  (lib (name "SmartKnob_Prototype") (type "KiCad") (uri "${KIPRJMOD}/../../libraries/symbols/SmartKnob_Prototype.kicad_sym") (options "") (descr "")))

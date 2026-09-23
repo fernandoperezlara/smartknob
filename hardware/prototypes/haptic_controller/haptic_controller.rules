@@ -1,0 +1,50 @@
+
+(rules PCB haptic_controller.dsn
+  (snapAngle 
+    fortyfive_degree
+  )
+  (rule
+    (width 200.0)
+    (clearance 200.0)
+    (clearance 100.0 (type smd_to_turn_gap))
+    (clearance 50.0 (type smd))
+    (clearance 500.0 (type "board_edge"))
+  )
+  (padstack "Via[0-1]_600:300_um"
+    (shape
+      (circle F.Cu 600.0 0.0 0.0)
+    )
+    (shape
+      (circle B.Cu 600.0 0.0 0.0)
+    )
+    (attach off)
+  )
+  (via 
+    "Via[0-1]_600:300_um" "Via[0-1]_600:300_um" default
+  )
+  (viaRule
+    default "Via[0-1]_600:300_um"
+  )
+  (viaRule
+    default "Via[0-1]_600:300_um"
+  )
+  (class default
+    "/SOC_RAW" "/I_C" "/I_A" /GND "/SOA_RAW" /DRVOFF "/PWM_U" "/MOTOR_U"
+    "/MOTOR_V" "/MOTOR_W" /NFAULT "/VM_PROTECTED" "/MOSI_DRV" /MOSI "/PWM_W_DRV" "/PWM_W"
+    "/NSLEEP_DRV" /NSLEEP /3V3 "/I_B" /CPL /CPH "/DUMP_GATE" "/OVP_SENSE"
+    "/VREF_GATE" "/CS_DRV" /CP "/GATE_REV" "/VM_FUSED" /AVDD "/VM_IN" /VREF
+    "/VM_ADC" /MISO "/SCLK_ENC" "/MISO_ENC" "/CS_ENC_IC" "unconnected-(J3-Pin_6-Pad6)" "/SCLK_DRV" /SCLK
+    "/DUMP_LOW" "/SDO_DRV" "/VREF_2V5" "/PWM_U_DRV" "unconnected-(U1-NC-Pad1)" "/FB_BK" "/SW_BK" "/NFAULT_DRV"
+    "unconnected-(U1-NC-Pad24)" "/PWM_V_DRV" "/CS_DRV_IC" "/SOB_RAW" "/PWM_V" "/CS_ENC" "/VM_PRESENT_BASE" "/ARM_BASE"
+    "/ARM_COL" "/MOTOR_ARM" "unconnected-(U2-RST_N-Pad2)" "unconnected-(U2-GPIO4_ADC4-Pad3)" "unconnected-(U2-GPIO5_ADC5-Pad4)" "unconnected-(U2-GPIO8_STRAP_LED-Pad9)" "unconnected-(U2-GPIO11-Pad11)" "unconnected-(U2-5V-Pad14)"
+    "unconnected-(U2-NC-Pad16)" "unconnected-(U2-GPIO15_STRAP-Pad20)" "unconnected-(U2-GPIO9_STRAP-Pad27)" "unconnected-(U2-GPIO13_USB_DP-Pad29)" "unconnected-(U2-GPIO12_USB_DM-Pad30)" "unconnected-(U2-NC-Pad32)" "unconnected-(U3-Pad7)"
+    (clearance_class default)
+    (via_rule default)
+    (rule
+      (width 200.0)
+    )
+    (circuit 
+      (use_layer F.Cu B.Cu)
+    )
+  )
+)
