@@ -17,12 +17,12 @@ static_cell = "2.1.1"
 embedded-hal-async = "1.0.0"
 
 # Utilities
-log = "0.4.34"
+log = "0.4.35"
 libm = "0.2.16"
 embedded-graphics = "0.8.2"
 
 # ESP32-specific crates
-esp-hal = { version = "~1.2.0", features = ["esp32c6", "unstable"] }
+esp-hal = { version = "1.2.0", features = ["esp32c6", "unstable"] }
 esp-rtos = { version = "0.4.0", features = ["esp32c6", "embassy", "log-04"] }
 esp-backtrace = { version = "0.20.0", features = ["panic-handler", "println", "esp32c6"] }
 esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32c6"] }
@@ -30,9 +30,9 @@ esp-println = { version = "0.18.0", features = ["log-04", "esp32c6"] }
 esp-alloc = { version = "0.11.0", features = ["esp32c6"] }
 
 [build-dependencies]
-fontdue = "0.9.4"
+fontdue = "0.9.5"
 serde = "1.0.229"
-toml = "1.1.5"
+toml = "1.2.1"
 
 [profile.release]
 opt-level = "s"
