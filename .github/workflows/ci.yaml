@@ -94,7 +94,7 @@ jobs:
         run: just build
 
       - name: Upload firmware ELF
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: smartknob-esp32c6-${{ github.sha }}
           path: firmware/target/riscv32imac-unknown-none-elf/release/smartknob
